@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- Everything loads from this site; no other host is allowed, so opened files cannot reach the network.
+     'unsafe-eval' is for the formula engine (src/formula.js). -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; connect-src 'self' data: blob:; frame-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Offline Office</title>
+<link rel="stylesheet" href="vendor/fonts.css">
+<link rel="stylesheet" href="src/styles.css">
+</head>
+<body>
+<div id="app">
+<header class="topbar">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"></span>Offline Office</div>
+  <nav class="tabs" id="tabs" role="tablist">
+    <button class="tab" role="tab" data-mod="home" aria-selected="true">Home</button>
+    <button class="tab" role="tab" data-mod="doc">Documents</button>
+    <button class="tab" role="tab" data-mod="pdf">PDF</button>
+    <button class="tab" role="tab" data-mod="slides">Slides</button>
+    <button class="tab" role="tab" data-mod="sheet">Sheets</button>
+    <button class="tab" role="tab" data-mod="text">Text</button>
+    <button class="tab" role="tab" data-mod="image">Photos</button>
+    <button class="tab" role="tab" data-mod="compare">Compare</button>
+    <button class="tab" role="tab" data-mod="convert">Convert</button>
+  </nav>
+  <div class="top-actions">
+    <button class="btn" id="openAny" title="Open a file (Ctrl O)" aria-label="Open a file" data-i="folder"><span class="lbl-wide">Open</span></button>
+    <button class="btn sq ghost" id="themeBtn" title="Theme: system" aria-label="Change theme"></button>
+  </div>
+  <input type="file" id="fileAny" hidden>
+</header>
+
+<main>
+<!-- HOME -->
+<section class="mod" id="mod-home">
+  <div class="home">
+    <div class="home-head"><h1>Open a file</h1><p>Drop a file anywhere in this window, or choose one. Files are read and saved in this browser tab; nothing is uploaded.</p></div>
+    <div class="drop" id="homeDrop" tabindex="0" role="button" aria-label="Choose a file to open">
+      <span class="ico" data-i="upload"></span><div><b>Choose a file</b><span class="sub">or drop it here</span></div><kbd>Ctrl O</kbd>
+    </div>
+    <div><h2 class="sec-h">Create new</h2><div class="new-list" id="homeCards"></div></div>
+    <div id="homeTpl" hidden><h2 class="sec-h">Your templates</h2><div class="new-list" id="homeTplList"></div></div>
+    <div><h2 class="sec-h">Tools</h2><div class="new-list one" id="homeTools"></div></div>
+    <div><h2 class="sec-h">Formats it opens</h2>
+      <dl class="formats">
+        <dt>Documents</dt><dd>DOCX · DOC · ODT · RTF · EPUB · HTML · Markdown · Pages preview</dd>
+        <dt>PDF</dt><dd>PDF, plus images to merge in</dd>
+        <dt>Slides</dt><dd>PPTX · PPT · ODP · Keynote preview</dd>
+        <dt>Sheets</dt><dd>XLSX · XLS · XLSB · ODS · CSV · TSV · Numbers</dd>
+        <dt>Photos</dt><dd>JPG · PNG · HEIC · TIFF · WebP · AVIF · GIF · BMP · SVG</dd>
+        <dt>Compare</dt><dd>Any two of DOCX · DOC · ODT · RTF · EPUB · PDF · HTML · Markdown · TXT</dd>
+        <dt>Text</dt><dd>TXT · MD · JSON · CSV · HTML and about 70 code formats</dd>
+      </dl>
+    </div>
+    <div class="privacy"><span class="dot"></span>Works offline once loaded. <kbd>Ctrl S</kbd> saves from any editor.</div>
+  </div>
+</section>
+
+<!-- DOCUMENTS -->
+<section class="mod" id="mod-doc" hidden>
+  <div class="toolbar" id="docBar">
+    <details class="menu"><summary class="btn">File<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="new">New document</button><button data-a="open">Open .docx .doc .odt .rtf .epub…<small>Ctrl O</small></button>
+      <hr><div class="mh">Export</div>
+      <button data-a="docx">Word document<small>.docx</small></button><button data-a="pdf">PDF<small>.pdf</small></button><button data-a="odt">OpenDocument text<small>.odt</small></button><button data-a="rtf">Rich text<small>.rtf</small></button>
+      <button data-a="html">Web page<small>.html</small></button><button data-a="md">Markdown<small>.md</small></button><button data-a="txt">Plain text<small>.txt</small></button>
+      <hr><button data-a="page">Page setup…</button>
+    </div></details>
+    <button class="btn sq ghost" data-c="undo" title="Undo (Ctrl Z)" data-i="undo"></button><button class="btn sq ghost" data-c="redo" title="Redo (Ctrl Y)" data-i="redo"></button>
+    <span class="sep"></span>
+    <select class="ctl" id="docBlock" title="Paragraph style"><option value="p">Normal</option><option value="h1">Heading 1</option><option value="h2">Heading 2</option><option value="h3">Heading 3</option><option value="h4">Heading 4</option><option value="blockquote">Quote</option><option value="pre">Code block</option></select>
+    <select class="ctl" id="docFont" title="Font"><option value="Georgia">Georgia</option><option value="Times New Roman">Times New Roman</option><option value="Arial">Arial</option><option value="Helvetica">Helvetica</option><option value="Calibri">Calibri</option><option value="Verdana">Verdana</option><option value="Garamond">Garamond</option><option value="Courier New">Courier New</option><option value="IBM Plex Sans">IBM Plex Sans</option></select>
+    <select class="ctl" id="docSize" title="Font size"><option>10</option><option>11</option><option>12</option><option>14</option><option selected>16</option><option>18</option><option>20</option><option>24</option><option>28</option><option>32</option><option>40</option><option>48</option></select>
+    <span class="sep"></span>
+    <button class="btn sq ghost" data-c="bold" title="Bold (Ctrl B)" data-i="bold"></button><button class="btn sq ghost" data-c="italic" title="Italic (Ctrl I)" data-i="italic"></button><button class="btn sq ghost" data-c="underline" title="Underline (Ctrl U)" data-i="underline"></button><button class="btn sq ghost" data-c="strikeThrough" title="Strikethrough" data-i="strike"></button><button class="btn sq ghost" data-c="superscript" title="Superscript" data-i="sup"></button><button class="btn sq ghost" data-c="subscript" title="Subscript" data-i="sub"></button>
+    <label class="btn swatch" title="Text color" data-i="type"><input type="color" id="docColor" value="#c0392b" aria-label="Text color"></label>
+    <label class="btn swatch" title="Highlight" data-i="marker"><input type="color" id="docHilite" value="#ffe066" aria-label="Highlight"></label>
+    <span class="sep"></span>
+    <button class="btn sq ghost" data-c="justifyLeft" title="Align left" data-i="alignL"></button><button class="btn sq ghost" data-c="justifyCenter" title="Center" data-i="alignC"></button><button class="btn sq ghost" data-c="justifyRight" title="Align right" data-i="alignR"></button><button class="btn sq ghost" data-c="justifyFull" title="Justify" data-i="alignJ"></button>
+    <button class="btn sq ghost" data-c="insertUnorderedList" title="Bulleted list" data-i="list"></button><button class="btn sq ghost" data-c="insertOrderedList" title="Numbered list" data-i="olist"></button><button class="btn sq ghost" data-c="outdent" title="Decrease indent" data-i="outdent"></button><button class="btn sq ghost" data-c="indent" title="Increase indent" data-i="indent"></button>
+    <span class="sep"></span>
+    <details class="menu"><summary class="btn ghost">Insert<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="link">Link…<small>Ctrl K</small></button><button data-a="image">Image…</button><button data-a="table">Table…</button><button data-a="hr">Horizontal line</button><button data-a="pagebreak">Page break</button><button data-a="toc">Table of contents</button><button data-a="date">Today's date</button>
+      <hr><div class="mh">Symbols</div><div class="row" id="docSymbols" style="padding:4px 8px;max-width:240px"></div>
+    </div></details>
+    <details class="menu"><summary class="btn ghost">Table<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="rowAbove">Insert row above</button><button data-a="rowBelow">Insert row below</button><button data-a="colLeft">Insert column left</button><button data-a="colRight">Insert column right</button><hr><button data-a="delRow">Delete row</button><button data-a="delCol">Delete column</button><button data-a="delTable">Delete table</button>
+    </div></details>
+    <button class="btn sq ghost" data-c="removeFormat" title="Clear formatting" aria-label="Clear formatting" data-i="clearFmt"></button>
+    <span class="sep"></span>
+    <button class="btn sq ghost" data-a="find" title="Find and replace (Ctrl F)" aria-label="Find and replace" data-i="search"></button>
+    <button class="btn ghost push" data-a="example" title="Replace what is open with an example file">Example</button>
+  </div>
+  <div class="work">
+    <div class="desk doc-desk" id="docDesk"><div class="doc-page" id="docPage" contenteditable="true" spellcheck="true"></div></div>
+    <aside class="panel side" id="docFind" hidden>
+      <h4>Find &amp; replace <button class="btn sq ghost" data-a="closeFind" aria-label="Close" data-i="x"></button></h4>
+      <div class="field"><label class="lbl" for="dfFind">Find</label><input type="text" id="dfFind" placeholder="Text or /regex/"></div>
+      <div class="field"><label class="lbl" for="dfRep">Replace with</label><input type="text" id="dfRep"></div>
+      <label class="check"><input type="checkbox" id="dfCase"> Match case</label>
+      <label class="check"><input type="checkbox" id="dfRegex"> Regular expression</label>
+      <label class="check"><input type="checkbox" id="dfWhole"> Whole words</label>
+      <div class="row"><button class="btn" data-a="findNext">Find next</button><button class="btn" data-a="replaceOne">Replace</button><button class="btn primary" data-a="replaceAll">Replace all</button></div>
+      <div class="status" id="dfInfo"></div>
+    </aside>
+  </div>
+  <div class="statusbar"><div class="status" id="docStatus"></div><select class="ctl zoom" id="docZoom" title="Zoom"><option value="0.75">75%</option><option value="0.9">90%</option><option value="1" selected>100%</option><option value="1.25">125%</option><option value="1.5">150%</option></select></div>
+</section>
+
+<!-- PDF -->
+<section class="mod" id="mod-pdf" hidden>
+  <div class="toolbar" id="pdfBar">
+    <details class="menu"><summary class="btn">File<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="open">Open PDF…</button><button data-a="merge">Merge: append PDFs or images…</button><button data-a="new">New blank PDF</button>
+      <hr><div class="mh">Export</div>
+      <button data-a="export">Save PDF<small>Ctrl S</small></button><button data-a="exportSel">Extract selected pages<small>.pdf</small></button><button data-a="split">Split into single pages<small>.zip</small></button><button data-a="images">Pages as images<small>.zip</small></button><button data-a="ocr">Recognize text (OCR)<small>makes scans searchable</small></button><button data-a="text">Extract text → Text editor</button><button data-a="toDoc">Extract text → Documents</button>
+    </div></details>
+    <span class="sep"></span>
+    <div class="seg" id="pdfTools">
+      <button data-t="select" class="on" title="Select and move (V)">Select</button><button data-t="edittext" title="Edit the existing text on the page (E)">Edit text</button><button data-t="text" title="Add text (T)">Text</button><button data-t="draw" title="Freehand pen (P)">Pen</button><button data-t="highlight" title="Highlight (H)">Highlight</button><button data-t="rect" title="Rectangle (R)">Box</button><button data-t="ellipse" title="Ellipse">Oval</button><button data-t="whiteout" title="White-out / cover existing content (W)">White-out</button>
+    </div>
+    <button class="btn ghost" data-a="image">Image</button><button class="btn ghost" data-a="sign" title="Add a drawn or typed signature">Sign</button>
+    <label class="btn swatch" title="Color" data-i="drop"><input type="color" id="pdfColor" value="#c0392b" aria-label="Color"></label>
+    <select class="ctl" id="pdfSize" title="Text size / pen width"><option value="8">8</option><option value="10">10</option><option value="12">12</option><option value="14" selected>14</option><option value="18">18</option><option value="24">24</option><option value="32">32</option><option value="48">48</option></select>
+    <select class="ctl" id="pdfFont" title="Font"><option value="Helvetica">Helvetica</option><option value="TimesRoman">Times</option><option value="Courier">Courier</option></select>
+    <button class="btn sq ghost" id="pdfBold" title="Bold text" aria-pressed="false" data-i="bold"></button>
+    <span class="sep"></span>
+    <details class="menu"><summary class="btn ghost">Pages<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="rotL">Rotate left</button><button data-a="rotR">Rotate right</button><button data-a="dup">Duplicate page</button><button data-a="blank">Insert blank page after</button><button data-a="up">Move up</button><button data-a="down">Move down</button><button data-a="reverse">Reverse order</button><hr><button data-a="selAll">Select all pages</button><button data-a="del" class="danger">Delete selected pages</button>
+    </div></details>
+    <details class="menu"><summary class="btn ghost">Tools<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="watermark">Watermark…</button><button data-a="numbers">Page numbers…</button><button data-a="header">Header / footer text…</button><button data-a="forms">Fill form fields…</button><button data-a="meta">Document properties…</button><hr><button data-a="clearAnn">Remove my annotations on this page</button>
+    </div></details>
+    <span class="sep"></span>
+    <button class="btn sq ghost" data-a="zoomOut" title="Zoom out" data-i="minus"></button><span class="status" id="pdfZoom" style="padding:0">100%</span><button class="btn sq ghost" data-a="zoomIn" title="Zoom in" data-i="plus"></button><button class="btn ghost" data-a="fit" title="Fit page width">Fit</button>
+    <button class="btn ghost push" data-a="example" title="Replace what is open with an example file">Example</button><button class="btn primary" data-a="export">Save PDF</button>
+  </div>
+  <div class="work">
+    <div class="panel thumbs" id="pdfThumbs"></div>
+    <div class="desk pdf-desk" id="pdfDesk"></div>
+  </div>
+  <div class="status" id="pdfStatus"></div>
+</section>
+
+<!-- SLIDES -->
+<section class="mod" id="mod-slides" hidden>
+  <div class="toolbar" id="slBar">
+    <details class="menu"><summary class="btn">File<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="new">New presentation</button><button data-a="open">Open .pptx .ppt .odp…</button>
+      <hr><div class="mh">Export</div><button data-a="pptx">PowerPoint<small>.pptx</small></button><button data-a="pdf">PDF<small>.pdf</small></button><button data-a="png">Current slide as image<small>.png</small></button><button data-a="json">Editable project<small>.deck.json</small></button>
+    </div></details>
+    <button class="btn sq ghost" data-a="undo" title="Undo" data-i="undo"></button><button class="btn sq ghost" data-a="redo" title="Redo" data-i="redo"></button>
+    <span class="sep"></span>
+    <details class="menu"><summary class="btn ghost" data-i="plus">Slide<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-l="title">Title slide</button><button data-l="content">Title and content</button><button data-l="two">Two columns</button><button data-l="section">Section header</button><button data-l="image">Picture with caption</button><button data-l="blank">Blank</button>
+    </div></details>
+    <button class="btn ghost" data-a="dupSlide">Duplicate</button><button class="btn ghost" data-a="delSlide">Delete</button>
+    <span class="sep"></span>
+    <button class="btn ghost" data-a="addText">Text box</button>
+    <details class="menu"><summary class="btn ghost">Shape<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-s="rect">Rectangle</button><button data-s="roundRect">Rounded rectangle</button><button data-s="ellipse">Ellipse</button><button data-s="triangle">Triangle</button><button data-s="line">Line</button>
+    </div></details>
+    <button class="btn ghost" data-a="addImage">Image</button>
+    <details class="menu"><summary class="btn ghost">Arrange<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="front">Bring to front</button><button data-a="back">Send to back</button><hr><button data-al="l">Align left</button><button data-al="c">Align center</button><button data-al="r">Align right</button><button data-al="t">Align top</button><button data-al="m">Align middle</button><button data-al="b">Align bottom</button>
+    </div></details>
+    <details class="menu"><summary class="btn ghost">Theme<span class="ic" data-i="chev"></span></summary><div class="menu-list" id="slThemes"></div></details>
+    <span class="sep"></span>
+    <button class="btn ghost push" data-a="example" title="Replace what is open with an example file">Example</button><button class="btn" data-a="present" data-i="play">Present</button>
+  </div>
+  <div class="work">
+    <div class="panel slide-list" id="slList"></div>
+    <div class="desk stage-wrap" id="slStageWrap"><div class="stage-box" id="slStageBox"></div></div>
+    <div class="panel props" id="slProps"></div>
+  </div>
+  <div class="status" id="slStatus"></div>
+</section>
+
+<!-- SHEETS -->
+<section class="mod" id="mod-sheet" hidden>
+  <div class="toolbar" id="shBar">
+    <details class="menu"><summary class="btn">File<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="new">New workbook</button><button data-a="open">Open .xlsx .xls .csv .ods .numbers…</button>
+      <hr><div class="mh">Export</div><button data-a="xlsx">Excel workbook<small>.xlsx</small></button><button data-a="xls">Excel 97–2003<small>.xls</small></button><button data-a="ods">OpenDocument sheet<small>.ods</small></button><button data-a="csv">Current sheet<small>.csv</small></button><button data-a="html">Current sheet as table<small>.html</small></button>
+    </div></details>
+    <button class="btn sq ghost" data-a="undo" title="Undo" data-i="undo"></button><button class="btn sq ghost" data-a="redo" title="Redo" data-i="redo"></button>
+    <span class="sep"></span>
+    <button class="btn sq ghost" data-st="b" title="Bold" data-i="bold"></button><button class="btn sq ghost" data-st="i" title="Italic" data-i="italic"></button><button class="btn sq ghost" data-st="u" title="Underline" data-i="underline"></button>
+    <button class="btn sq ghost" data-al="left" title="Align left" data-i="alignL"></button><button class="btn sq ghost" data-al="center" title="Center" data-i="alignC"></button><button class="btn sq ghost" data-al="right" title="Align right" data-i="alignR"></button>
+    <label class="btn swatch" title="Text color" data-i="type"><input type="color" id="shColor" value="#c0392b" aria-label="Text color"></label>
+    <label class="btn swatch" title="Fill color" data-i="bucket"><input type="color" id="shFill" value="#fff3bf" aria-label="Fill color"></label>
+    <button class="btn ghost" data-a="clearFmt" title="Clear formatting">Clear</button>
+    <span class="sep"></span>
+    <select class="ctl" id="shFmt" title="Number format"><option value="">General</option><option value="num">Number 1,234.00</option><option value="cur">Currency $</option><option value="eur">Currency €</option><option value="pct">Percent %</option><option value="int">Integer</option><option value="date">Date</option></select>
+    <button class="btn sq ghost" data-a="decLess" title="Fewer decimals">.0</button><button class="btn sq ghost" data-a="decMore" title="More decimals">.00</button>
+    <span class="sep"></span>
+    <details class="menu"><summary class="btn ghost">Rows &amp; cols<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="rowAbove">Insert row above</button><button data-a="rowBelow">Insert row below</button><button data-a="colLeft">Insert column left</button><button data-a="colRight">Insert column right</button><hr><button data-a="delRow">Delete row(s)</button><button data-a="delCol">Delete column(s)</button>
+    </div></details>
+    <details class="menu"><summary class="btn ghost">Data<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="sortAsc">Sort A → Z by column</button><button data-a="sortDesc">Sort Z → A by column</button><button data-a="fillDown">Fill down<small>Ctrl D</small></button><button data-a="find">Find &amp; replace…</button><button data-a="dedupe">Remove duplicate rows</button><button data-a="trim">Trim whitespace</button>
+    </div></details>
+    <details class="menu"><summary class="btn ghost">Functions<span class="ic" data-i="chev"></span></summary><div class="menu-list" id="shFns"></div></details>
+    <button class="btn ghost" data-a="chart">Chart</button>
+    <button class="btn ghost push" data-a="example" title="Replace what is open with an example file">Example</button>
+  </div>
+  <div class="fbar"><input class="ctl ref" id="shRef" value="A1" aria-label="Cell reference"><span class="fx">fx</span><input class="f" id="shFormula" aria-label="Formula" placeholder="Value or =formula"></div>
+  <div class="grid-wrap" id="shWrap" tabindex="0"><table class="grid" id="shGrid"></table></div>
+  <div class="sheet-tabs" id="shTabs"></div>
+  <div class="status" id="shStatus"></div>
+</section>
+
+<!-- TEXT -->
+<section class="mod" id="mod-text" hidden>
+  <div class="toolbar" id="txBar">
+    <details class="menu"><summary class="btn">File<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="new">New file</button><button data-a="open">Open text / code file…</button><hr>
+      <button data-a="save">Save<small>Ctrl S</small></button><button data-a="saveAs">Save as…</button><hr><div class="mh">Convert</div>
+      <button data-a="toHtml">Markdown → HTML file</button><button data-a="toDoc">Open in Documents editor</button><button data-a="toPdf">Export as PDF</button>
+    </div></details>
+    <select class="ctl" id="txMode" title="Language"><option value="plain">Plain text</option><option value="md">Markdown</option><option value="json">JSON</option><option value="html">HTML</option><option value="csv">CSV</option><option value="code">Code</option></select>
+    <div class="seg" id="txView"><button data-v="edit" class="on">Edit</button><button data-v="split">Split</button><button data-v="preview">Preview</button></div>
+    <span class="sep"></span>
+    <span id="txMd" class="row" style="gap:4px"><button class="btn sq ghost" data-m="**" title="Bold" data-i="bold"></button><button class="btn sq ghost" data-m="_" title="Italic" data-i="italic"></button><button class="btn sq ghost" data-m="h" title="Heading" data-i="heading"></button><button class="btn sq ghost" data-m="ul" title="List" data-i="list"></button><button class="btn sq ghost" data-m="ol" title="Numbered list" data-i="olist"></button><button class="btn sq ghost" data-m="link" title="Link" data-i="link"></button><button class="btn sq ghost" data-m="`" title="Code" data-i="code"></button><button class="btn sq ghost" data-m="quote" title="Quote" data-i="quote"></button><button class="btn sq ghost" data-m="table" title="Table" data-i="table"></button><span class="sep"></span></span>
+    <details class="menu"><summary class="btn ghost">Tools<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <div class="mh">JSON</div><button data-a="jsonFmt">Format JSON</button><button data-a="jsonMin">Minify JSON</button><button data-a="jsonCheck">Validate JSON</button>
+      <hr><div class="mh">Text (selection or all)</div><button data-a="upper">UPPERCASE</button><button data-a="lower">lowercase</button><button data-a="title">Title Case</button><button data-a="sort">Sort lines A→Z</button><button data-a="sortR">Sort lines Z→A</button><button data-a="reverse">Reverse lines</button><button data-a="dedupe">Remove duplicate lines</button><button data-a="empty">Remove empty lines</button><button data-a="trim">Trim trailing spaces</button><button data-a="number">Number lines</button>
+      <hr><div class="mh">Encode</div><button data-a="b64e">Base64 encode</button><button data-a="b64d">Base64 decode</button><button data-a="urle">URL encode</button><button data-a="urld">URL decode</button><button data-a="freq">Word frequency report</button>
+    </div></details>
+    <button class="btn ghost" data-a="find" title="Find and replace (Ctrl F)" data-i="search">Find</button>
+    <button class="btn ghost" id="txWrap" aria-pressed="false" title="Word wrap">Wrap</button>
+    <button class="btn sq ghost" data-a="smaller" title="Smaller text">A−</button><button class="btn sq ghost" data-a="bigger" title="Larger text">A+</button>
+    <span class="status" id="txName" style="padding:0 6px"></span>
+    <button class="btn ghost push" data-a="example" title="Replace what is open with an example file">Example</button>
+  </div>
+  <div class="work" id="txWork">
+    <div class="findbar" id="txFind" hidden style="position:absolute;top:6px;right:6px;z-index:10;box-shadow:var(--shadow)">
+      <input type="text" id="tfFind" placeholder="Find"><input type="text" id="tfRep" placeholder="Replace">
+      <label class="check"><input type="checkbox" id="tfCase">Aa</label><label class="check"><input type="checkbox" id="tfRegex">.*</label>
+      <button class="btn" data-a="fNext">Next</button><button class="btn" data-a="fRep">Replace</button><button class="btn" data-a="fAll">All</button><span class="status" id="tfInfo"></span><button class="btn sq ghost" data-a="fClose" aria-label="Close" data-i="x"></button>
+    </div>
+    <div class="editor-box" id="txEdBox"><div class="gutter" id="txGutter">1</div><textarea class="code" id="txArea" spellcheck="false" aria-label="Text editor"></textarea></div>
+    <div class="panel preview" id="txPreview" hidden></div>
+  </div>
+  <div class="status" id="txStatus"></div>
+</section>
+
+<!-- IMAGE -->
+<section class="mod" id="mod-image" hidden>
+  <div class="toolbar" id="imBar">
+    <details class="menu"><summary class="btn">File<span class="ic" data-i="chev"></span></summary><div class="menu-list">
+      <button data-a="open">Open image…<small>PNG JPG HEIC TIFF…</small></button><button data-a="newImg">New blank canvas…</button><hr><div class="mh">Export</div>
+      <button data-a="png">PNG<small>keeps transparency</small></button><button data-a="jpg">JPEG<small>.jpg</small></button><button data-a="webp">WebP<small>.webp</small></button><button data-a="toPdf">Send to PDF editor</button><button data-a="ocrText">Copy text from image (OCR)<small>opens in Text</small></button>
+    </div></details>
+    <button class="btn sq ghost" data-a="undo" title="Undo (Ctrl Z)" data-i="undo"></button><button class="btn sq ghost" data-a="redo" title="Redo (Ctrl Y)" data-i="redo"></button>
+    <span class="sep"></span>
+    <div class="seg wrap" id="imTools">
+      <button data-t="none" class="on" title="Select and move text (V)">Move</button><button data-t="crop" title="Crop (C)">Crop</button><button data-t="text" title="Add text (T)">Text</button><button data-t="brush" title="Brush (B)">Brush</button><button data-t="erase" title="Erase to transparent (E)">Eraser</button><button data-t="restore" title="Paint back the original after removing a background (R)">Restore</button><button data-t="wand" title="Magic eraser: click a color area to make it transparent (W)">Magic</button><button data-t="rect">Box</button><button data-t="ellipse">Oval</button><button data-t="line">Line</button><button data-t="arrow">Arrow</button><button data-t="pixelate" title="Pixelate an area to hide it">Pixelate</button><button data-t="blur" title="Blur an area to hide it">Blur</button><button data-t="pick" title="Eyedropper: pick a color from the image (I)">Picker</button>
+    </div>
+    <label class="btn swatch" title="Color" data-i="drop"><input type="color" id="imColor" value="#e63946" aria-label="Color"></label>
+    <select class="ctl" id="imSize" title="Brush size"><option>2</option><option>4</option><option selected>8</option><option>14</option><option>24</option><option>40</option><option>64</option><option>100</option></select>
+    <span class="sep"></span>
+    <button class="btn sq ghost" data-a="rotL" title="Rotate left" data-i="rotL"></button><button class="btn sq ghost" data-a="rotR" title="Rotate right" data-i="rotR"></button><button class="btn sq ghost" data-a="flipH" title="Flip horizontal" data-i="flipH"></button><button class="btn sq ghost" data-a="flipV" title="Flip vertical" data-i="flipV"></button><button class="btn ghost" data-a="resize">Resize…</button>
+    <span id="imCropActs" hidden class="row" style="gap:4px"><span class="sep"></span><select class="ctl" id="imAspect" title="Crop ratio"><option value="0">Free</option><option value="1">1:1</option><option value="1.3333">4:3</option><option value="1.5">3:2</option><option value="1.7778">16:9</option><option value="0.8">4:5</option><option value="0.5625">9:16</option></select><button class="btn accent" data-a="applyCrop">Apply crop</button><button class="btn" data-a="cancelCrop">Cancel</button></span>
+    <span class="sep"></span>
+    <button class="btn sq ghost" id="imCompare" title="Press and hold to compare with the original" aria-label="Compare with original" data-i="eye"></button>
+    <button class="btn ghost push" data-a="example" title="Replace what is open with an example file">Example</button>
+  </div>
+  <div class="work">
+    <div class="desk img-desk is-empty" id="imDesk"><div id="imEmpty"></div><div class="img-stack" id="imStack" hidden><canvas id="imCanvas"></canvas><canvas class="pv" id="imPv" hidden></canvas><div id="imLayers"></div><canvas class="ov" id="imOv"></canvas></div></div>
+    <aside class="panel side im-side" id="imSide">
+      <section id="imTextPanel" class="acc-body" hidden></section>
+      <details class="acc" open><summary>Enhance quality</summary><div class="acc-body">
+        <button class="btn wide" data-a="autoEnhance">Auto enhance</button>
+        <div class="btn-grid"><button class="btn" data-a="autoColor" title="Stretch each color channel and remove color casts">Auto color</button><button class="btn" data-a="autoContrast" title="Stretch tones from black to white">Auto contrast</button><button class="btn" data-a="wb" title="Neutralise a color cast">White balance</button><button class="btn" data-a="denoise" title="Smooth grain and color noise">Denoise</button><button class="btn" data-a="sharpenOnce" title="Crisper detail">Sharpen</button><button class="btn" data-a="deblur" title="Stronger sharpening for soft photos">Fix softness</button><button class="btn" data-a="up2" title="Double the resolution with Lanczos resampling">Upscale 2×</button><button class="btn" data-a="up4" title="Four times the resolution">Upscale 4×</button></div>
+      </div></details>
+      <details class="acc" open><summary>Remove background</summary><div class="acc-body">
+        <button class="btn wide" data-a="removeBg">Remove background</button>
+        <div class="range"><label for="bgTol">Tolerance</label><input type="range" id="bgTol" min="1" max="100" value="30"><output>30</output></div>
+        <div class="range"><label for="bgSoft">Edge softness</label><input type="range" id="bgSoft" min="0" max="10" value="2"><output>2</output></div>
+        <label class="check"><input type="checkbox" id="bgContig" checked> Magic eraser: only touching areas</label>
+        <p class="hint">Works best on plain or studio backgrounds. Refine with Magic, Eraser and Restore in the toolbar.</p>
+        <span class="grp">Replace background with</span>
+        <div class="btn-grid"><button class="btn" data-a="bgColor">Color</button><button class="btn" data-a="bgBlur">Blurred original</button><button class="btn" data-a="bgImage">Image…</button><button class="btn" data-a="bgWhite">White</button></div>
+      </div></details>
+      <details class="acc" open><summary>Adjust</summary><div class="acc-body">
+        <div id="imRanges" style="display:grid;gap:7px"></div>
+        <span class="grp">Presets</span><div class="presets" id="imPresets"></div>
+        <div class="row"><button class="btn accent" data-a="applyAdj">Apply</button><button class="btn" data-a="resetAdj">Reset</button></div>
+      </div></details>
+      <details class="acc"><summary>Straighten</summary><div class="acc-body">
+        <div class="range"><label for="imStraight">Angle</label><input type="range" id="imStraight" min="-45" max="45" step="0.5" value="0"><output>0°</output></div>
+        <div class="row"><button class="btn accent" data-a="applyStraight">Apply</button><button class="btn" data-a="resetStraight">Reset</button></div>
+      </div></details>
+      <details class="acc" open><summary>Export</summary><div class="acc-body">
+        <div class="range"><label for="imQ">Quality</label><input type="range" id="imQ" min="0.3" max="1" step="0.01" value="0.92"><output id="imQo">92%</output></div>
+        <div class="row"><button class="btn" data-a="png">PNG</button><button class="btn" data-a="jpg">JPG</button><button class="btn" data-a="webp">WebP</button></div>
+        <div class="status" id="imInfo" style="display:grid;gap:2px"></div>
+      </div></details>
+    </aside>
+  </div>
+  <div class="status" id="imStatus"></div>
+</section>
+<!-- COMPARE -->
+<section class="mod" id="mod-compare" hidden>
+  <div class="toolbar" id="cmpBar">
+    <button class="btn ghost" data-a="pickA" data-i="folder" title="Choose the original file">Original</button><span class="status cmp-name" id="cmpNameA">No file</span>
+    <button class="btn sq ghost" data-a="swap" data-i="swap" title="Swap original and revised" aria-label="Swap original and revised"></button>
+    <button class="btn ghost" data-a="pickB" data-i="folder" title="Choose the revised file">Revised</button><span class="status cmp-name" id="cmpNameB">No file</span>
+    <span class="sep"></span>
+    <div class="seg" id="cmpView"><button data-v="side" class="on">Side by side</button><button data-v="redline">Redline</button></div>
+    <label class="check"><input type="checkbox" id="cmpOnly"> Changes only</label>
+    <label class="check"><input type="checkbox" id="cmpCase"> Ignore case</label>
+    <span class="sep"></span>
+    <button class="btn sq ghost" data-a="prev" data-i="up" title="Previous change (P)" aria-label="Previous change"></button><button class="btn sq ghost" data-a="next" data-i="chev" title="Next change (N)" aria-label="Next change"></button>
+    <details class="menu"><summary class="btn ghost">Export<span class="ic" data-i="chev"></span></summary><div class="menu-list right">
+      <button data-a="toDoc">Open report in Documents<small>then save as Word or PDF</small></button><button data-a="html">Save report<small>.html</small></button>
+    </div></details>
+    <button class="btn ghost push" data-a="example" title="Load two example versions">Example</button>
+  </div>
+  <div class="work"><div class="desk cmp-desk" id="cmpDesk"></div></div>
+  <div class="status" id="cmpStatus"></div>
+</section>
+<section class="mod" id="mod-convert" hidden>
+  <div class="toolbar" id="cvBar">
+    <button class="btn ghost" data-a="add" data-i="folder">Add files</button>
+    <span class="sep"></span>
+    <label class="check" for="cvTo">Convert to</label><select class="ctl" id="cvTo"></select>
+    <button class="btn primary" data-a="go" id="cvGo" disabled>Convert</button>
+    <button class="btn ghost push" data-a="clear">Clear list</button>
+  </div>
+  <div class="work"><div class="desk cmp-desk" id="cvDesk"></div></div>
+  <div class="status" id="cvStatus"></div>
+</section>
+<section class="mod" id="mod-addons" hidden>
+  <div class="toolbar" id="adBar">
+    <button class="btn ghost" data-a="add" data-i="upload">Add files</button>
+  </div>
+  <div class="work"><div class="desk cmp-desk" id="adDesk"></div></div>
+  <div class="status" id="adStatus"></div>
+</section>
+</main>
+</div>
+<div id="toasts" aria-live="polite"></div>
+<input type="file" id="filePick" hidden>
+
+<script src="vendor/pdf.min.js"></script>
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="vendor/jszip.min.js"></script>
+<script src="vendor/mammoth.browser.min.js"></script>
+<script src="vendor/docx.umd.js"></script>
+<script src="vendor/pptxgen.bundle.js"></script>
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="vendor/marked.min.js"></script>
+<script src="vendor/purify.min.js"></script>
+<script src="vendor/html2canvas.min.js"></script>
+<script src="src/core.js"></script>
+<script src="src/formats.js"></script>
+<script src="src/formula.js"></script>
+<script src="src/diff.js"></script>
+<script src="src/documents.js"></script>
+<script src="src/pdf.js"></script>
+<script src="src/slides.js"></script>
+<script src="src/sheets.js"></script>
+<script src="src/text.js"></script>
+<script src="src/photos.js"></script>
+<script src="src/compare.js"></script>
+<script src="src/convert.js"></script>
+<script src="src/addons.js"></script>
+<script src="src/boot.js"></script>
+</body>
+</html>
